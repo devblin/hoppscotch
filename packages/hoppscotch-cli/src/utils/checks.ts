@@ -10,7 +10,7 @@ import {
 } from "@hoppscotch/data";
 import * as E from "fp-ts/Either";
 import * as S from "fp-ts/string";
-import { pipe } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/function";
 
 /**
  * Typeguard to check valid Hoppscotch REST Collection
