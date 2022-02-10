@@ -1,21 +1,53 @@
-import { testAsync } from "../utils";
+import { execAsync, getCmdOutMsg, getTestJsonFilePath } from "../utils";
+import { errors } from "../../utils";
 
-describe("Checks 'hopp-cli test' command:", () => {
-  describe("Succesful executions:", () => {
-    test.concurrent("2000ms test.", async () => {
-      const time = 2000;
-      const res = await testAsync(time);
-      expect(res).toBe(`Done in ${time}`);
+describe("Test 'hopp-cli run <file>' command:", () => {
+  describe("Successful executions:", () => {
+    test.concurrent("No file path provided.", async () => {
+      const res = await execAsync(`pnpx hopp-cli run`);
+      const out = getCmdOutMsg(res.stdout);
+      expect(out).toBe(
+        `ERROR [${errors.HOPP005.code}]: ${errors.HOPP005.message}`
+      );
     });
-    test.concurrent("2000ms test.", async () => {
-      const time = 2000;
-      const res = await testAsync(time);
-      expect(res).toBe(`Done in ${time}`);
+
+    test.concurrent("Invalid collection.json file path.", async () => {
+      const res = await execAsync(`pnpx hopp-cli run test.json`);
+      const out = getCmdOutMsg(res.stdout);
+      expect(out).toBe(
+        `ERROR [${errors.HOPP001.code}]: ${errors.HOPP001.message}`
+      );
     });
-    test.concurrent("2000ms test.", async () => {
-      const time = 2000;
-      const res = await testAsync(time);
-      expect(res).toBe(`Done in ${time}`);
+
+    test.concurrent("Malformed collection.json file.", async () => {
+      const res = await execAsync(
+        `pnpx hopp-cli run ${getTestJsonFilePath("invalid.json")}`
+      );
+      const out = getCmdOutMsg(res.stdout);
+      expect(out).toBe(
+        `ERROR [${errors.HOPP003.code}]: ${errors.HOPP003.message}`
+      );
+    });
+
+    test.concurrent("File not json type.", async () => {
+      const res = await execAsync(
+        `pnpx hopp-cli run ${getTestJsonFilePath("notjson.txt")}`
+      );
+      const out = getCmdOutMsg(res.stdout);
+      expect(out).toBe(
+        `ERROR [${errors.HOPP004.code}]: ${errors.HOPP004.message}`
+      );
+    });
+
+    test.concurrent("Some tests failing.", async () => {
+      const { error } = await execAsync(
+        `pnpx hopp-cli run ${getTestJsonFilePath("fails.json")}`
+      );
+      if (error) {
+        expect(error.code).toBe(1);
+      } else {
+        expect(error).not.toBeNull();
+      }
     });
   });
 });

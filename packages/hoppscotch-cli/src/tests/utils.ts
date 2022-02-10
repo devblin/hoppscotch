@@ -8,3 +8,14 @@ export const execAsync = (command: string): Promise<ExecResponse> =>
 
 export const testAsync = (time: number): Promise<string> =>
   new Promise((resolve) => setTimeout(() => resolve(`Done in ${time}`), time));
+
+export const getCmdOutMsg = (out: string) => {
+  const ansiRegex =
+    /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g;
+  return out.split("\n")[0].replace(ansiRegex, "");
+};
+
+export const getTestJsonFilePath = (file: string) => {
+  const path = `~/Desktop/oss/hoppscotch/packages/hoppscotch-cli/src/tests/samples/`;
+  return `${path}${file}`;
+};
