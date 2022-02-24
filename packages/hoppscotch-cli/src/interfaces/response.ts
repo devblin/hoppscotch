@@ -1,5 +1,6 @@
 import { TestResponse } from "@hoppscotch/js-sandbox/lib/test-runner";
 import { Method } from "axios";
+import { ExpectResult } from "../types";
 
 /**
  * Table response interface
@@ -35,8 +36,19 @@ export interface RunnerResponseInfo extends TestResponse {
  * @property {string} testScript - Template string for hoppscotch tests.
  * @property {TestResponse} response - Response structure for test script.
  */
-export interface TestScriptPair {
+export interface TestScriptData {
   name: string;
   testScript: string;
   response: TestResponse;
+}
+
+export interface TestReport {
+  descriptor: string;
+  expectResults: ExpectResult[];
+  failing: number;
+  passing: number;
+}
+
+export interface ResponseErrorPair {
+  [key: number]: string;
 }

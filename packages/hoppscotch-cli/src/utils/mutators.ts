@@ -1,33 +1,15 @@
-import { Environment } from "../interfaces";
-import { flow } from "fp-ts/function";
-import * as S from "fp-ts/string";
-import * as RA from "fp-ts/ReadonlyArray";
+import inquirer from "inquirer";
+import fs from "fs/promises";
+import * as E from "fp-ts/Either";
+import * as T from "fp-ts/Task";
+import * as TE from "fp-ts/TaskEither";
 import clone from "lodash/clone";
-import { RawKeyValueEntry, FormDataEntry } from "../interfaces";
-
-export function parseTemplateString(
-  str: string,
-  variables: Environment["variables"]
-) {
-  if (!variables || !str) {
-    return str;
-  }
-  const searchTerm = /<<([^>]*)>>/g; // "<<myVariable>>"
-  return decodeURI(encodeURI(str)).replace(
-    searchTerm,
-    (_, p1) => variables.find((x) => x.key === p1)?.value || ""
-  );
-}
-
-export function parseBodyEnvVariables(
-  body: string,
-  env: Environment["variables"]
-): string {
-  return body.replace(/<<\w+>>/g, (key) => {
-    const found = env.find((envVar) => envVar.key === key.replace(/[<>]/g, ""));
-    return found ? found.value : key;
-  });
-}
+import { CLIContext, RequestStack } from "../interfaces";
+import { FormDataEntry, error, HoppCLIError } from "../types";
+import { checkFileURL, isRESTCollection, requestsParser } from ".";
+import fuzzyPath from "inquirer-fuzzy-path";
+import { HoppCollection, HoppRESTRequest } from "@hoppscotch/data";
+inquirer.registerPrompt("fuzzypath", fuzzyPath);
 
 /**
  * Sorts the array based on the sort func.
@@ -55,26 +37,6 @@ export const arrayFlatMap =
   (arr: T[]) =>
     arr.flatMap(mapFunc);
 
-export const parseRawKeyValueEntry = (str: string): RawKeyValueEntry => {
-  const trimmed = str.trim();
-  const inactive = trimmed.startsWith("#");
-
-  const [key, value] = trimmed.split(":").map(S.trim);
-
-  return {
-    key: inactive ? key.replace(/^#+\s*/g, "") : key, // Remove comment hash and early space
-    value,
-    active: !inactive,
-  };
-};
-
-export const parseRawKeyValueEntries = flow(
-  S.split("\n"),
-  RA.filter((x) => x.trim().length > 0), // Remove lines which are empty
-  RA.map(parseRawKeyValueEntry),
-  RA.toArray
-);
-
 export const tupleToRecord = <
   KeyType extends string | number | symbol,
   ValueType
@@ -92,3 +54,119 @@ export const toFormData = (values: FormDataEntry[]) => {
 
   return formData;
 };
+
+/**
+ * Parse options to collect JSON file path, through interactive CLI.
+ * @param context The initial CLI context object
+ * @returns The parsed absolute file path string
+ */
+export const parseCLIOptions =
+  (context: CLIContext): T.Task<any> =>
+  async () => {
+    try {
+      const { fileUrl }: { fileUrl: string } = await inquirer.prompt([
+        {
+          type: "fuzzypath",
+          name: "fileUrl",
+          message: "Enter your Hoppscotch collection.json path:",
+          excludePath: (nodePath: string) => nodePath.includes("node_modules"),
+          excludeFilter: (nodePath: string) =>
+            nodePath == "." || nodePath.startsWith("."),
+          itemType: "file",
+          suggestOnly: false,
+          rootPath: ".",
+          depthLimit: 5,
+          emptyText: "No results...try searching for some other file!",
+        },
+      ]);
+      const _checkFileURL = await checkFileURL(fileUrl)();
+      if (E.isRight(_checkFileURL)) {
+        context.path = _checkFileURL.right;
+      } else {
+        return parseCLIOptions(context)();
+      }
+    } catch (e) {
+      return await parseCLIOptions(context)();
+    }
+  };
+
+/**
+ * Parses provided error message to maintain hopp-error messages.
+ * @param e Custom error data.
+ * @returns string
+ */
+export const parseErrorMessage = (e: any) => {
+  let msg: string;
+  if (e instanceof Error) {
+    const x = e as NodeJS.ErrnoException;
+    msg = e.message.replace(x.code! + ":", "").replace("error:", "");
+  } else {
+    msg = e;
+  }
+  return msg.replace(/\n+$|\s{2,}/g, "").trim();
+};
+
+/**
+ * Parses collection json file for given path:context.path, and validates
+ * the parsed collectiona array.
+ * @param context
+ * @returns TaskEither<HoppCLIError, HoppCollection<HoppRESTRequest>[]>
+ */
+export const parseCollectionData =
+  (
+    context: CLIContext
+  ): TE.TaskEither<HoppCLIError, HoppCollection<HoppRESTRequest>[]> =>
+  async () => {
+    try {
+      const collectionArray = JSON.parse(
+        (await fs.readFile(context.path!)).toString()
+      );
+
+      if (!Array.isArray(collectionArray)) {
+        return E.left(
+          error({ code: "MALFORMED_COLLECTION", path: context.path! })
+        );
+      }
+
+      for (const [idx, _] of collectionArray.entries()) {
+        const pm = {
+          x: { ...collectionArray[idx] },
+        };
+        const _isRESTCollection = isRESTCollection(pm);
+        if (!_isRESTCollection) {
+          return E.left(
+            error({ code: "MALFORMED_COLLECTION", path: context.path! })
+          );
+        }
+        collectionArray[idx] = pm.x;
+      }
+
+      context.collections = collectionArray;
+      return E.right(context.collections || []);
+    } catch (e) {
+      return E.left(error({ code: "UNKNOWN_ERROR", data: E.toError(e) }));
+    }
+  };
+
+/**
+ * Flattens nested requests.
+ * @param collectionArray Array of hopp-collection's hopp-rest-request
+ * @param debug Debugger mode toggle
+ * @returns TE.TaskEither<HoppCLIError<HoppCLIErrorCode>, RequestStack[]>
+ */
+export const flattenRequests =
+  (
+    collectionArray: HoppCollection<HoppRESTRequest>[],
+    debug: boolean
+  ): TE.TaskEither<HoppCLIError, RequestStack[]> =>
+  async () => {
+    let requests: RequestStack[] = [];
+    for (const x of collectionArray) {
+      const parsedRequests = await requestsParser(x, debug)();
+      if (E.isLeft(parsedRequests)) {
+        return parsedRequests;
+      }
+      requests = [...requests, ...parsedRequests.right];
+    }
+    return E.right(requests);
+  };
