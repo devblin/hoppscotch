@@ -17,6 +17,6 @@ export const getErrorCode = (out: string) => {
 };
 
 export const getTestJsonFilePath = (file: string) => {
-  const path = `${process.cwd()}/tests/samples/`;
+  const path = `${process.cwd()}/src/__tests__/samples/`;
   return `${path}${file}`;
 };

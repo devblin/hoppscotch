@@ -16,5 +16,5 @@
       "path": "../"
     }
   ],
-  "exclude": ["tests"]
+  "exclude": ["__tests__"]
 }
