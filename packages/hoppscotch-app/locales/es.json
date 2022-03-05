@@ -75,6 +75,7 @@
     "continue_with_email": "Continuar con correo electrónico",
     "continue_with_github": "Continuar con GitHub",
     "continue_with_google": "Continuar con Google",
+    "continue_with_microsoft": "Continue with Microsoft",
     "email": "Correo electrónico",
     "logged_out": "Desconectado",
     "login": "Acceder",
@@ -103,6 +104,7 @@
     "invalid_name": "Proporciona un nombre válido para la colección.",
     "my_collections": "Mis colecciones",
     "name": "Mi nueva colección",
+    "name_length_insufficient": "Collection name should be at least 3 characters long",
     "new": "Nueva colección",
     "renamed": "Colección renombrada",
     "request_in_use": "Request in use",
@@ -159,14 +161,19 @@
     "tests": "No hay pruebas para esta petición"
   },
   "environment": {
+    "add_to_global": "Add to Global",
+    "added": "Environment addition",
     "create_new": "Crea un nuevo entorno",
+    "deleted": "Environment deletion",
     "edit": "Editar entorno",
     "invalid_name": "Proporcione un nombre válido para el entorno.",
     "nested_overflow": "nested environment variables are limited to 10 levels",
     "new": "Nuevo entorno",
     "no_environment": "Sin entorno",
+    "no_environment_description": "No environments were selected. Choose what to do with the following variables.",
     "select": "Seleccionar entorno",
     "title": "Entornos",
+    "updated": "Environment updation",
     "variable_list": "Lista de variables"
   },
   "error": {
@@ -199,6 +206,7 @@
     "created": "Carpeta creada",
     "edit": "Editar carpeta",
     "invalid_name": "Proporcione un nombre para la carpeta.",
+    "name_length_insufficient": "Folder name should be at least 3 characters long",
     "new": "Nueva carpeta",
     "renamed": "Carpeta renombrada"
   },
@@ -208,7 +216,6 @@
     "subscriptions": "Suscripciones"
   },
   "header": {
-    "account": "Cuenta",
     "install_pwa": "Instalar aplicación",
     "login": "Acceso",
     "save_workspace": "Guardar mi espacio de trabajo"
@@ -322,6 +329,7 @@
     "name": "Solicitar nombre",
     "parameter_list": "Parámetros de consulta",
     "parameters": "Parámetros",
+    "path": "Sendero",
     "payload": "Carga útil",
     "query": "Consulta",
     "raw_body": "Cuerpo de petición sin procesar",
@@ -342,6 +350,7 @@
     "html": "HTML",
     "image": "Imagen",
     "json": "JSON",
+    "pdf": "PDF",
     "preview_html": "Vista previa de HTML",
     "raw": "Crudo",
     "size": "Tamaño",
@@ -432,7 +441,6 @@
       "head_method": "Seleccione el método HEAD",
       "method": "Método",
       "next_method": "Seleccione el método siguiente",
-      "path": "Sendero",
       "post_method": "Seleccione el método POST",
       "previous_method": "Seleccione el método anterior",
       "put_method": "Seleccione el método PUT",
@@ -561,6 +569,7 @@
     "new_name": "Mi nuevo equipo",
     "no_access": "No tienes acceso de edición a estas colecciones.",
     "no_invite_found": "Invitation not found. Contact your team owner.",
+    "not_found": "Team not found. Contact your team owner.",
     "not_valid_viewer": "You are not a valid viewer. Contact your team owner.",
     "pending_invites": "Pending invites",
     "permissions": "Permisos",
