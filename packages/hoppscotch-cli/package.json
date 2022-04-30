@@ -17,7 +17,7 @@
     "prepublish": "pnpx tsup",
     "prettier-format": "prettier --config .prettierrc 'src/**/*.ts' --write",
     "do-typecheck": "pnpx tsc --noEmit",
-    "test": "jest"
+    "test": "pnpm run build && pnpm link @hoppscotch/cli && jest && pnpm rm @hoppscotch/cli"
   },
   "keywords": [
     "cli",
